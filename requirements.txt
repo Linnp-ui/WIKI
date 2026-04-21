@@ -1,0 +1,7 @@
+# Required dependencies
+openai
+requests
+pyyaml
+
+# Required for document conversion
+markitdown

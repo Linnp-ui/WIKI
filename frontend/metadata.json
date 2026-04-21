@@ -1,0 +1,6 @@
+{
+  "name": "WikiGraph AI",
+  "description": "A structured knowledge graph and wiki system with a read-only raw data layer, an LLM-maintained wiki layer, and an intelligent chat interface.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

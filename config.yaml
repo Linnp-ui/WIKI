@@ -1,0 +1,60 @@
+# LLM Wiki Configuration
+
+## Paths
+raw_sources_dir: raw_sources
+wiki_dir: wiki
+schema_dir: schema
+scripts_dir: scripts
+
+## Wiki Structure
+wiki:
+  concepts_dir: wiki/concepts
+  entities_dir: wiki/entities
+  summaries_dir: wiki/summaries
+  index_file: wiki/index.md
+
+## Schema
+schema:
+  system_prompt: schema/system_prompt.md
+  templates_dir: schema/templates
+
+## LLM Settings
+llm:
+  # 高级别模型（用于信息提取）
+  high:
+    provider: cloudflare
+    model: "@cf/google/gemma-4-26b-a4b-it"
+    temperature: 0.7
+    max_tokens: 4096
+  # 中级别模型（用于智能查询和API聊天）
+  medium:
+    provider: cloudflare
+    model: "@cf/meta/llama-3-8b-instruct"
+    temperature: 0.7
+    max_tokens: 2048
+  # 低级别模型（用于质量检查）
+  low:
+    provider: cloudflare
+    model: "@cf/meta/llama-3-8b-instruct"
+    temperature: 0.5
+    max_tokens: 1024
+
+## Cloudflare Workers AI
+cloudflare:
+  api_url: ${CLOUDFLARE_API_URL}
+  api_token: ${CLOUDFLARE_API_TOKEN}
+
+## Vector Store (for辅助查找)
+vector_store:
+  type: chromadb  # chromadb, faiss
+  persist_directory: .vector_store
+
+## Document Processing
+document_processing:
+  supported_formats:
+    - pdf
+    - txt
+    - md
+    - docx
+  chunk_size: 1000
+  chunk_overlap: 200

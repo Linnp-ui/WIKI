@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Path Fix</title>
+</head>
+<body>
+    <h1>Path Fix Test</h1>
+    <div id="test"></div>
+    <script>
+        // Test data simulating backend response
+        const testData = [
+            { path: 'summaries\\ai_llm_学习路线.md', title: 'AI LLM 学习路线' },
+            { path: 'concepts\\llm-wiki.md', title: 'LLM Wiki' }
+        ];
+        
+        console.log('Original data:', testData);
+        
+        // Test different path replacement methods
+        const fixedData1 = testData.map(p => ({
+            ...p,
+            path: p.path.replace(/\\/g, '/')
+        }));
+        
+        const fixedData2 = testData.map(p => ({
+            ...p,
+            path: p.path.split('\\').join('/')
+        }));
+        
+        console.log('Fixed with replace:', fixedData1);
+        console.log('Fixed with split/join:', fixedData2);
+        
+        document.getElementById('test').innerHTML = `
+            <h2>Original Paths:</h2>
+            <ul>${testData.map(p => `<li>${p.path}</li>`).join('')}</ul>
+            <h2>Fixed with replace:</h2>
+            <ul>${fixedData1.map(p => `<li>${p.path}</li>`).join('')}</ul>
+            <h2>Fixed with split/join:</h2>
+            <ul>${fixedData2.map(p => `<li>${p.path}</li>`).join('')}</ul>
+        `;
+    </script>
+</body>
+</html>

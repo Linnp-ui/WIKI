@@ -1,0 +1,2 @@
+# This file ensures the wiki directory is preserved in git
+# while ignoring its contents

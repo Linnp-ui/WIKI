@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-theme-bg: #f5f7fa;
+  --color-theme-sidebar: #ffffff;
+  --color-theme-border: #e1e4e8;
+  --color-theme-text: #1a1c21;
+  --color-theme-dim: #6a737d;
+  --color-theme-accent: #0969da;
+  --color-theme-accent-soft: rgba(9, 105, 218, 0.1);
+  --color-theme-tag: #eff1f3;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+body {
+  @apply bg-theme-bg text-theme-text font-sans;
+}
+
+@layer utilities {
+  .prose {
+    @apply text-theme-text leading-[1.6];
+  }
+  .prose h1 {
+    @apply text-[28px] font-bold text-theme-text mb-4 mt-0;
+  }
+  .prose h2 {
+    @apply text-xl font-semibold text-theme-text mb-4 mt-6;
+  }
+  .prose h3 {
+    @apply text-[18px] font-semibold text-theme-text mb-2 mt-5;
+  }
+  .prose p {
+    @apply mb-2 mt-2;
+  }
+  .prose ul {
+    @apply list-disc ml-5 mt-2 mb-4;
+  }
+  .prose ol {
+    @apply list-decimal ml-5 mt-2 mb-4;
+  }
+  .prose li {
+    @apply text-theme-text;
+  }
+  .prose a {
+    @apply text-theme-accent no-underline bg-theme-accent-soft px-1 py-[1px] rounded-[3px];
+  }
+  .prose strong {
+    @apply font-bold text-theme-text;
+  }
+  .prose em {
+    @apply italic text-theme-text;
+  }
+  .prose blockquote {
+    @apply border-l-4 border-theme-border pl-4 italic text-theme-dim my-4;
+  }
+  .prose code {
+    @apply font-mono text-[13px] bg-theme-tag text-theme-dim px-1.5 py-0.5 rounded;
+  }
+  .prose pre {
+    @apply font-mono text-[13px] bg-theme-bg text-theme-dim p-4 rounded-lg overflow-x-auto my-4 border border-theme-border;
+  }
+  .prose pre code {
+    @apply bg-transparent text-inherit p-0;
+  }
+}
