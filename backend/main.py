@@ -18,7 +18,8 @@ from contextlib import asynccontextmanager
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
 # Import functions from scripts
-from ingest import ingest_file, find_orphan_pages, find_broken_links, find_logical_contradictions, find_frequent_unestablished_terms
+from ingest import ingest_file
+from lint import find_orphan_pages, find_broken_links, find_logical_contradictions, find_frequent_unestablished_terms
 
 # Global variables
 wiki_pages_cache = None
@@ -700,9 +701,21 @@ def get_pages():
     return pages
 
 
+@app.get("/api/wiki/pages")
+def get_wiki_pages_api():
+    """Get all wiki pages (alias for /api/pages)"""
+    return get_pages()
+
+
 @app.get("/api/pages/{page_id}")
 def get_page(page_id: str):
     """Get a specific wiki page"""
+    return get_page_by_id(page_id)
+
+
+@app.get("/api/wiki/pages/{page_id}")
+def get_wiki_page(page_id: str):
+    """Get a specific wiki page (alias for /api/pages/{page_id})"""
     return get_page_by_id(page_id)
 
 
