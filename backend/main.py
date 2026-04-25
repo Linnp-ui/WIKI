@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     global config, WIKI_DIR, RAW_SOURCES_DIR, BASE_DIR
     
     # Load configuration
-    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     config_path = os.path.join(BASE_DIR, "config.yaml")
     
     if not os.path.exists(config_path):
@@ -633,7 +633,7 @@ def get_system_config():
 
 @app.post("/api/system/ingest")
 async def ingest_document(file: UploadFile = File(...)):
-    """Ingest a document"""
+    """Ingest a document and generate wiki pages"""
     # Save uploaded file
     file_path = os.path.join(RAW_SOURCES_DIR, file.filename)
     os.makedirs(RAW_SOURCES_DIR, exist_ok=True)
@@ -643,23 +643,45 @@ async def ingest_document(file: UploadFile = File(...)):
             content = await file.read()
             buffer.write(content)
 
-        # Run workflow to process the file
+        # Run ingest script directly to process the specific file
         import subprocess
-        workflow_script = os.path.join(BASE_DIR, "scripts", "workflow.py")
+        ingest_script = os.path.join(BASE_DIR, "scripts", "ingest.py")
+        
+        # Set UTF-8 encoding for subprocess on Windows
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'
+        
         result = subprocess.run(
-            [sys.executable, workflow_script],
+            [sys.executable, ingest_script, file_path],
             capture_output=True,
-            text=True
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            env=env
         )
 
-        # Check if workflow succeeded
+        # Check if ingest succeeded
         if result.returncode != 0:
-            raise Exception(f"Workflow failed: {result.stderr}")
+            error_msg = result.stderr if result.stderr else "Unknown error during ingestion"
+            raise Exception(f"Ingest failed: {error_msg}")
+
+        # Clear wiki pages cache to ensure new pages are loaded
+        global wiki_pages_cache, cache_timestamp
+        wiki_pages_cache = None
+        cache_timestamp = 0
+
+        # Get newly created pages
+        new_pages = []
+        for line in result.stdout.split('\n'):
+            if 'Created/updated' in line and 'page:' in line:
+                page_path = line.split('page:')[-1].strip()
+                new_pages.append(page_path)
 
         return {
             "message": "Document ingested successfully",
             "file": file.filename,
-            "workflow_output": result.stdout
+            "pages_created": new_pages,
+            "ingest_output": result.stdout
         }
     except ValueError as ve:
         # Unsupported file format or other validation errors
@@ -725,7 +747,7 @@ def get_raw_sources():
         raise HTTPException(status_code=500, detail=f"Error reading raw sources: {str(e)}")
 
 
-@app.get("/api/system/raw-sources/{source_id}/preview-delete")
+@app.get("/api/system/raw-sources/{source_id:path}/preview-delete")
 def preview_delete_raw_source(source_id: str):
     """Preview the impact of deleting a raw source file"""
     try:
@@ -740,7 +762,7 @@ def preview_delete_raw_source(source_id: str):
         raise HTTPException(status_code=500, detail=f"Error previewing delete: {str(e)}")
 
 
-@app.delete("/api/system/raw-sources/{source_id}")
+@app.delete("/api/system/raw-sources/{source_id:path}")
 def delete_raw_source(source_id: str):
     """Delete a raw source file and mark related wiki pages as orphan"""
     try:
@@ -782,25 +804,25 @@ def get_wiki_pages_api():
     return get_pages()
 
 
-@app.get("/api/pages/{page_id}")
+@app.get("/api/pages/{page_id:path}")
 def get_page(page_id: str):
     """Get a specific wiki page"""
     return get_page_by_id(page_id)
 
 
-@app.get("/api/wiki/pages/{page_id}")
+@app.get("/api/wiki/pages/{page_id:path}")
 def get_wiki_page(page_id: str):
     """Get a specific wiki page (alias for /api/pages/{page_id})"""
     return get_page_by_id(page_id)
 
 
-@app.put("/api/pages/{page_id}")
+@app.put("/api/pages/{page_id:path}")
 def update_page(page_id: str, page_data: Dict[str, Any]):
     """Update a wiki page"""
     return save_page(page_id, page_data)
 
 
-@app.delete("/api/pages/{page_id}")
+@app.delete("/api/pages/{page_id:path}")
 def delete_wiki_page(page_id: str, auto_clean_links: bool = True):
     """Delete a wiki page"""
     return delete_page(page_id, auto_clean_links)

@@ -24,6 +24,7 @@ export default function App() {
         const pages = data.map((p: any) => ({
           path: p.path.split('\\').join('/'),
           content: p.content,
+          title: p.title || p.path.split('/').pop()?.replace(/\.md$/, '') || '',
           lastModified: p.lastModified ? new Date(p.lastModified * 1000).toISOString() : new Date().toISOString()
         }));
         setWikiPages(pages);
@@ -34,6 +35,33 @@ export default function App() {
   useEffect(() => {
     refreshWikiPages();
   }, []);
+
+  useEffect(() => {
+    if (wikiPages.length > 0 && currentWikiPath === 'index.md') {
+      const defaultPage = wikiPages.find(p => p.path.endsWith('index.md')) 
+        || wikiPages.find(p => p.path.endsWith('/index.md'))
+        || wikiPages[0];
+      if (defaultPage) {
+        setCurrentWikiPath(defaultPage.path);
+        setNavigationHistory([defaultPage.path]);
+        setHistoryIndex(0);
+      }
+    }
+  }, [wikiPages]);
+
+  useEffect(() => {
+    // Auto-select a default page once pages are loaded
+    if (wikiPages.length > 0 && currentWikiPath === 'index.md') {
+      const defaultPage = wikiPages.find(p => p.path.endsWith('index.md')) 
+        || wikiPages.find(p => p.path.endsWith('/index.md'))
+        || wikiPages[0];
+      if (defaultPage) {
+        setCurrentWikiPath(defaultPage.path);
+        setNavigationHistory([defaultPage.path]);
+        setHistoryIndex(0);
+      }
+    }
+  }, [wikiPages]);
 
   const handleNavigateWiki = (path: string) => {
     const isNewPage = path !== currentWikiPath;
@@ -125,6 +153,7 @@ export default function App() {
             onNavigate={handleNavigateWiki}
             onGoBack={handleGoBack}
             canGoBack={historyIndex >= 0}
+            onWikiLinkClick={handleNavigateWiki}
             onDeletePage={(pageId) => {
               setWikiPages(prev => prev.filter(p => p.path !== `${pageId}.md`));
               if (currentWikiPath === `${pageId}.md`) setCurrentWikiPath('index.md');

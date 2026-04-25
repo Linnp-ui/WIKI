@@ -148,13 +148,13 @@ export function WikiView({ pages, currentPath, onNavigate, onDeletePage, onGoBac
               ) : (
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-gray-500" />
-                  <span className="truncate">{node.name.replace('.md', '')}</span>
+                  <span className="truncate">{node.name.replace(/\.md$/, '')}</span>
                 </div>
               )}
             </button>
             {node.type === 'file' && (
               <button
-                onClick={(e) => handleDeletePage(e, getPageIdFromPath(node.path), node.name.replace('.md', ''))}
+                onClick={(e) => handleDeletePage(e, getPageIdFromPath(node.path), node.name.replace(/\.md$/, ''))}
                 className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                 title="Delete page"
               >
@@ -175,35 +175,63 @@ export function WikiView({ pages, currentPath, onNavigate, onDeletePage, onGoBac
   const handleWikiLinkClick = (pageName: string) => {
     console.log('Looking for page:', pageName); // Debug log
     
-    // Normalize page name for matching
-    const normalizedPageName = pageName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-    console.log('Normalized page name:', normalizedPageName); // Debug log
-    
-    // Try to find page by normalized name in path
+    // 1. 首先尝试精确匹配（检查是否存在完全匹配的页面）
     let targetPage = pages.find(p => {
-      const normalizedPath = p.path.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-      return normalizedPath.includes(normalizedPageName);
+      // 如果 pageName 包含路径分隔符，尝试完整路径匹配
+      if (pageName.includes('/')) {
+        const pagePathWithoutExt = p.path.replace(/\.md$/, '');
+        if (pagePathWithoutExt.toLowerCase() === pageName.toLowerCase()) return true;
+      }
+      // 否则只匹配文件名
+      const pageBaseName = p.path.split('/').pop()?.replace(/\.md$/, '');
+      return pageBaseName?.toLowerCase() === pageName.toLowerCase();
     });
     
-    // If not found, try to find by exact filename match
+    // 2. 如果没有找到，尝试模糊匹配（检查路径中是否包含关键词）
     if (!targetPage) {
-      const pageFileName = normalizedPageName + '.md';
-      targetPage = pages.find(p => p.path.endsWith(pageFileName));
+      // 提取关键词（去除常见修饰词）
+      const keywords = pageName
+        .replace(/的|了|和|与|或|是|在|有|为|以|我|他|她|它|们|这|那|你|您|能|可以|应该|必须|需要|如何|什么|为什么|怎样|哪里|何时|多少|哪些|哪个/g, ' ')
+        .split(/\s+/)
+        .filter(word => word.length > 1);
+      
+      if (keywords.length > 0) {
+        // 计算每个页面的匹配分数
+        const scoredPages = pages.map(page => {
+          let score = 0;
+          const pageText = (page.path + ' ' + page.title + ' ' + page.content).toLowerCase();
+          
+          keywords.forEach(keyword => {
+            if (pageText.includes(keyword.toLowerCase())) {
+              score += 1;
+              // 如果在路径中匹配，加分
+              if (page.path.toLowerCase().includes(keyword.toLowerCase())) {
+                score += 2;
+              }
+              // 如果在标题中匹配，加分
+              if (page.title.toLowerCase().includes(keyword.toLowerCase())) {
+                score += 1;
+              }
+            }
+          });
+          
+          return { page, score };
+        }).filter(({ score }) => score > 0);
+        
+        // 按分数排序，选择最高分的页面
+        if (scoredPages.length > 0) {
+          scoredPages.sort((a, b) => b.score - a.score);
+          targetPage = scoredPages[0].page;
+        }
+      }
     }
     
-    // If not found, try to find by title
+    // 3. 如果还是没有找到，尝试按类型搜索（优先搜索概念页面）
     if (!targetPage) {
-      targetPage = pages.find(p => {
-        const normalizedTitle = p.title.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-        return normalizedTitle.includes(normalizedPageName);
-      });
-    }
-    
-    // If not found, try to find by id
-    if (!targetPage) {
-      targetPage = pages.find(p => {
-        const normalizedId = p.id.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-        return normalizedId.includes(normalizedPageName);
+      const conceptPages = pages.filter(p => p.path.startsWith('concepts/'));
+      targetPage = conceptPages.find(p => {
+        const pageText = (p.path + ' ' + p.title + ' ' + p.content).toLowerCase();
+        return pageText.includes(pageName.toLowerCase());
       });
     }
     
@@ -244,7 +272,7 @@ export function WikiView({ pages, currentPath, onNavigate, onDeletePage, onGoBac
     }
   };
 
-  const getPageIdFromPath = (path: string) => path.replace('.md', '');
+  const getPageIdFromPath = (path: string) => path.replace(/\.md$/, '');
 
   return (
     <div className="flex h-full bg-gray-50">
@@ -293,13 +321,13 @@ export function WikiView({ pages, currentPath, onNavigate, onDeletePage, onGoBac
                   Wiki 知识层 / {currentPage.path.split('/').map((p, i) => (
                     <React.Fragment key={i}>
                       {i > 0 && ' / '}
-                      {i === 0 ? getFolderLabel(p) : p.replace('.md', '')}
+                      {i === 0 ? getFolderLabel(p) : p.replace(/\.md$/, '')}
                     </React.Fragment>
                   ))}
                 </div>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-3">
-                {currentPage.path.split('/').pop()?.replace('.md', '')}
+                {currentPage.path.split('/').pop()?.replace(/\.md$/, '')}
               </h1>
               <div className="text-xs bg-yellow-50 border border-yellow-200 text-yellow-800 px-2 py-1 rounded-md inline-block">
                 最后修改: {new Date(currentPage.lastModified).toLocaleDateString()}

@@ -17,7 +17,7 @@ sys.stderr.reconfigure(encoding='utf-8')
 
 def load_config() -> dict:
     """Load configuration from config.yaml"""
-    config_path = os.path.join(os.path.dirname(__file__), "..", "config.yaml")
+    config_path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")), "config.yaml")
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
@@ -119,7 +119,7 @@ def main():
     with open(index_file, "w", encoding="utf-8") as f:
         f.write(content)
     
-    print(f"✓ Updated index.md with {len(pages['concepts'])} concepts, {len(pages['entities'])} entities, {len(pages['summaries'])} summaries")
+    print(f"[OK] Updated index.md with {len(pages['concepts'])} concepts, {len(pages['entities'])} entities, {len(pages['summaries'])} summaries")
     print(f"Index file saved to: {index_file}")
 
 

@@ -66,7 +66,7 @@ def load_config() -> Dict:
         Dict: 配置信息字典，包含LLM设置、Wiki目录路径等
     """
     config_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "config.yaml"
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..")), "config.yaml"
     )
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
@@ -225,26 +225,26 @@ def process_chunk(chunk: str, provider: str, llm_config: Dict) -> Dict:
 
         # Prepare prompt
         prompt = f"""
-        Analyze the following content and extract:
-        1. KEY CONCEPTS: Important abstract ideas or principles with detailed definitions and explanations
-        2. ENTITIES: Specific people, organizations, models, technologies, or places with descriptions and relevance
-        3. MAIN CONCLUSIONS: Key takeaways and important insights from the document
+        请分析以下内容并提取：
+        1. 关键概念：重要的抽象思想或原理，提供详细的定义和解释
+        2. 实体信息：具体的人物、组织、模型、技术或地点，提供描述和相关性
+        3. 主要结论：文档中的关键要点和重要见解
         
-        Content:
+        内容：
         {chunk}
         
-        Format your response as:
-        CONCEPTS:
-        - Concept Name: Detailed definition and explanation of the concept
-        - Another Concept: Another detailed definition and explanation
+        请按照以下格式输出：
+        概念：
+        - 概念名称：概念的详细定义和解释
+        - 另一个概念：另一个详细的定义和解释
         
-        ENTITIES:
-        - Entity Name: Detailed description and relevance to the content
-        - Another Entity: Another detailed description and relevance
+        实体：
+        - 实体名称：详细描述及其与内容的相关性
+        - 另一个实体：另一个详细描述及其与内容的相关性
         
-        CONCLUSIONS:
-        - Key conclusion 1: Detailed explanation of the conclusion
-        - Key conclusion 2: Another detailed explanation of the conclusion
+        结论：
+        - 关键结论1：结论的详细解释
+        - 关键结论2：另一个结论的详细解释
         """
 
         # Call OpenAI API
@@ -253,7 +253,7 @@ def process_chunk(chunk: str, provider: str, llm_config: Dict) -> Dict:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant that analyzes documents and extracts structured information.",
+                    "content": "您是一位专业的文档分析助手，擅长从文档中提取结构化信息。请使用中文回答所有问题。",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -280,26 +280,26 @@ def process_chunk(chunk: str, provider: str, llm_config: Dict) -> Dict:
 
         # Prepare prompt for Bailing
         prompt = f"""
-        Analyze the following content and extract:
-        1. KEY CONCEPTS: Important abstract ideas or principles with detailed definitions and explanations
-        2. ENTITIES: Specific people, organizations, models, technologies, or places with descriptions and relevance
-        3. MAIN CONCLUSIONS: Key takeaways and important insights from the document
+        请分析以下内容并提取：
+        1. 关键概念：重要的抽象思想或原理，提供详细的定义和解释
+        2. 实体信息：具体的人物、组织、模型、技术或地点，提供描述和相关性
+        3. 主要结论：文档中的关键要点和重要见解
         
-        Content:
+        内容：
         {chunk}
         
-        Format your response as:
-        CONCEPTS:
-        - Concept Name: Detailed definition and explanation of the concept
-        - Another Concept: Another detailed definition and explanation
+        请按照以下格式输出：
+        概念：
+        - 概念名称：概念的详细定义和解释
+        - 另一个概念：另一个详细的定义和解释
         
-        ENTITIES:
-        - Entity Name: Detailed description and relevance to the content
-        - Another Entity: Another detailed description and relevance
+        实体：
+        - 实体名称：详细描述及其与内容的相关性
+        - 另一个实体：另一个详细描述及其与内容的相关性
         
-        CONCLUSIONS:
-        - Key conclusion 1: Detailed explanation of the conclusion
-        - Key conclusion 2: Another detailed explanation of the conclusion
+        结论：
+        - 关键结论1：结论的详细解释
+        - 关键结论2：另一个结论的详细解释
         """
 
         # Call Bailing API
@@ -312,7 +312,7 @@ def process_chunk(chunk: str, provider: str, llm_config: Dict) -> Dict:
         messages = [
             {
                 "role": "system",
-                "content": "You are a helpful assistant that analyzes documents and extracts structured information.",
+                "content": "您是一位专业的文档分析助手，擅长从文档中提取结构化信息。请使用中文回答所有问题。",
             },
             {"role": "user", "content": prompt},
         ]
@@ -346,32 +346,32 @@ def process_chunk(chunk: str, provider: str, llm_config: Dict) -> Dict:
 
         # Prepare prompt for Cloudflare
         prompt = f"""
-        You are an expert information extractor. Analyze the following content thoroughly and extract:
+        您是一位专业的信息提取专家。请仔细分析以下内容并提取：
         
-        1. KEY CONCEPTS: Important abstract ideas, principles, or frameworks with detailed definitions and comprehensive explanations. Focus on core concepts that are central to understanding the content.
+        1. 关键概念：重要的抽象思想、原理或框架，提供详细的定义和全面的解释。重点关注对理解内容至关重要的核心概念。
         
-        2. ENTITIES: Specific people, organizations, models, technologies, tools, or places mentioned in the content. For each entity, provide a detailed description and explain its relevance to the overall topic.
+        2. 实体信息：内容中提到的具体人物、组织、模型、技术、工具或地点。对于每个实体，请提供详细的描述并解释其与整体主题的相关性。
         
-        3. MAIN CONCLUSIONS: Key takeaways, important insights, and actionable recommendations from the document. These should be the most significant points that readers should remember.
+        3. 主要结论：文档中的关键要点、重要见解和可操作的建议。这些应该是读者应该记住的最重要的观点。
         
-        Content:
+        内容：
         {chunk}
         
-        IMPORTANT: Please format your response EXACTLY as follows, using the specified section headers and bullet points. Do not include any additional text or explanation outside of this format:
+        重要要求：请严格按照以下格式输出您的响应，使用指定的部分标题和项目符号。不要在格式之外包含任何额外的文本或解释：
         
-        CONCEPTS:
-        - Concept Name: Detailed definition and explanation of the concept
-        - Another Concept: Another detailed definition and explanation
+        概念：
+        - 概念名称：概念的详细定义和解释
+        - 另一个概念：另一个详细的定义和解释
         
-        ENTITIES:
-        - Entity Name: Detailed description and relevance to the content
-        - Another Entity: Another detailed description and relevance
+        实体：
+        - 实体名称：详细描述及其与内容的相关性
+        - 另一个实体：另一个详细描述及其与内容的相关性
         
-        CONCLUSIONS:
-        - Key conclusion 1: Detailed explanation of the conclusion
-        - Key conclusion 2: Another detailed explanation of the conclusion
+        结论：
+        - 关键结论1：结论的详细解释
+        - 关键结论2：另一个结论的详细解释
         
-        Make sure to extract as much relevant information as possible and provide detailed explanations rather than just brief mentions. Your analysis should be comprehensive and insightful.
+        请确保提取尽可能多的相关信息，并提供详细的解释，而不仅仅是简要提及。您的分析应该全面而有洞察力。
         """
 
         # Call Cloudflare Workers AI API
@@ -385,7 +385,7 @@ def process_chunk(chunk: str, provider: str, llm_config: Dict) -> Dict:
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant that analyzes documents and extracts structured information.",
+                    "content": "您是一位专业的文档分析助手，擅长从文档中提取结构化信息。请使用中文回答所有问题。",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -541,11 +541,11 @@ def parse_llm_response(response: str) -> Dict:
         line = line.strip()
         
         # 检测section标题
-        if line.upper() == "CONCEPTS:":
+        if line.upper() == "CONCEPTS:" or line == "概念：":
             current_section = "concepts"
-        elif line.upper() == "ENTITIES:":
+        elif line.upper() == "ENTITIES:" or line == "实体：":
             current_section = "entities"
-        elif line.upper() == "CONCLUSIONS:":
+        elif line.upper() == "CONCLUSIONS:" or line == "结论：":
             current_section = "conclusions"
         # 处理列表项
         elif line.startswith("-") and current_section:
@@ -559,19 +559,31 @@ def parse_llm_response(response: str) -> Dict:
                     description = parts[1].strip()
                     
                     if current_section == "concepts":
-                        sections[current_section].append({"name": name, "definition": description})
+                        # 移除序号前缀（如 "1. "、"2. " 等）
+                        clean_name = re.sub(r'^\d+\.\s*', '', name)
+                        sections[current_section].append({"name": clean_name, "definition": description})
                     elif current_section == "entities":
-                        sections[current_section].append({"name": name, "description": description})
+                        # 移除序号前缀
+                        clean_name = re.sub(r'^\d+\.\s*', '', name)
+                        sections[current_section].append({"name": clean_name, "description": description})
                     elif current_section == "conclusions":
-                        sections[current_section].append({"text": name, "explanation": description})
+                        # 移除序号前缀
+                        clean_text = re.sub(r'^\d+\.\s*', '', name)
+                        sections[current_section].append({"text": clean_text, "explanation": description})
             else:
                 # 如果没有冒号，将整个内容作为项
                 if current_section == "concepts":
-                    sections[current_section].append({"name": content, "definition": ""})
+                    # 移除序号前缀
+                    clean_content = re.sub(r'^\d+\.\s*', '', content)
+                    sections[current_section].append({"name": clean_content, "definition": ""})
                 elif current_section == "entities":
-                    sections[current_section].append({"name": content, "description": ""})
+                    # 移除序号前缀
+                    clean_content = re.sub(r'^\d+\.\s*', '', content)
+                    sections[current_section].append({"name": clean_content, "description": ""})
                 elif current_section == "conclusions":
-                    sections[current_section].append({"text": content, "explanation": ""})
+                    # 移除序号前缀
+                    clean_content = re.sub(r'^\d+\.\s*', '', content)
+                    sections[current_section].append({"text": clean_content, "explanation": ""})
 
     return sections
 
@@ -910,6 +922,11 @@ def create_or_update_page(
     safe_page_name = re.sub(r'-+', '-', safe_page_name)
     # Remove leading/trailing hyphens
     safe_page_name = safe_page_name.strip('-')
+    
+    # Prevent empty filename
+    if not safe_page_name:
+        safe_page_name = "untitled"
+        print(f"Warning: Empty page name after sanitization, using default: {safe_page_name}")
     
     filename = f"{safe_page_name}.md"
     page_path = os.path.join(dir_path, filename)
@@ -1467,6 +1484,12 @@ type: summary
     }
 
     summary_name = os.path.splitext(os.path.basename(source_file))[0].replace("**", "")
+    
+    # 防止创建空文件名的文件
+    if not summary_name:
+        summary_name = "untitled-summary"
+        print(f"Warning: Empty source file name, using default: {summary_name}")
+    
     page_path = create_or_update_page(
         summary_name, summary_content, "summary", config, source_file, summary_associations
     )

@@ -18,7 +18,7 @@ from datetime import datetime
 
 def load_config() -> dict:
     """Load configuration from config.yaml"""
-    config_path = os.path.join(os.path.dirname(__file__), "..", "config.yaml")
+    config_path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")), "config.yaml")
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
@@ -26,8 +26,15 @@ def load_config() -> dict:
 def run_ingest(source_file: str) -> bool:
     """Run ingestion process"""
     ingest_script = os.path.join(os.path.dirname(__file__), "ingest.py")
+    
+    # Set UTF-8 encoding for subprocess on Windows
+    env = os.environ.copy()
+    env['PYTHONIOENCODING'] = 'utf-8'
+    
     result = subprocess.run([sys.executable, ingest_script, source_file], 
-                         capture_output=True, text=True)
+                         capture_output=True, text=True,
+                         encoding='utf-8', errors='replace',
+                         env=env)
     print("=== INGEST OUTPUT ===")
     print(result.stdout)
     if result.stderr:
@@ -52,8 +59,15 @@ def run_query(query: str) -> str:
 def run_lint() -> bool:
     """Run lint process"""
     lint_script = os.path.join(os.path.dirname(__file__), "lint.py")
+    
+    # Set UTF-8 encoding for subprocess on Windows
+    env = os.environ.copy()
+    env['PYTHONIOENCODING'] = 'utf-8'
+    
     result = subprocess.run([sys.executable, lint_script], 
-                         capture_output=True, text=True)
+                         capture_output=True, text=True,
+                         encoding='utf-8', errors='replace',
+                         env=env)
     print("=== LINT OUTPUT ===")
     print(result.stdout)
     if result.stderr:
@@ -66,8 +80,14 @@ def update_index() -> bool:
     """Update wiki index.md"""
     update_script = os.path.join(os.path.dirname(__file__), "update_index.py")
     if os.path.exists(update_script):
+        # Set UTF-8 encoding for subprocess on Windows
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'
+        
         result = subprocess.run([sys.executable, update_script], 
-                             capture_output=True, text=True)
+                             capture_output=True, text=True,
+                             encoding='utf-8', errors='replace',
+                             env=env)
         print("=== INDEX UPDATE OUTPUT ===")
         print(result.stdout)
         if result.stderr:
@@ -83,8 +103,17 @@ def main():
     
     config = load_config()
     
+    # Get base directory (parent of scripts directory)
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    
     # Check if we have source files to ingest
     raw_sources_dir = config.get("raw_sources_dir", "raw_sources")
+    # Convert to absolute path if relative
+    if not os.path.isabs(raw_sources_dir):
+        raw_sources_dir = os.path.join(base_dir, raw_sources_dir)
+    
+    print(f"Looking for raw sources in: {raw_sources_dir}")
+    
     if os.path.exists(raw_sources_dir):
         source_files = [f for f in os.listdir(raw_sources_dir) 
                       if os.path.isfile(os.path.join(raw_sources_dir, f))]
@@ -96,9 +125,9 @@ def main():
                 print(f"\nProcessing: {source_file}")
                 success = run_ingest(full_path)
                 if success:
-                    print(f"✓ Successfully ingested: {source_file}")
+                    print(f"[OK] Successfully ingested: {source_file}")
                 else:
-                    print(f"✗ Failed to ingest: {source_file}")
+                    print(f"[FAIL] Failed to ingest: {source_file}")
         else:
             print("No source files found in raw_sources directory")
     else:

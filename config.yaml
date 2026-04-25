@@ -22,27 +22,27 @@ schema:
 llm:
   # 高级别模型（用于信息提取）
   high:
-    provider: cloudflare
-    model: "@cf/google/gemma-4-26b-a4b-it"
+    provider: bailing
+    model: "qwen-max-2025-07-28"
     temperature: 0.7
     max_tokens: 4096
   # 中级别模型（用于智能查询和API聊天）
   medium:
-    provider: cloudflare
-    model: "@cf/meta/llama-3-8b-instruct"
+    provider: bailing
+    model: "qwen-plus-2025-07-28"
     temperature: 0.7
     max_tokens: 2048
   # 低级别模型（用于质量检查）
   low:
-    provider: cloudflare
-    model: "@cf/meta/llama-3-8b-instruct"
+    provider: bailing
+    model: "qwen-flash-2025-07-28"
     temperature: 0.5
     max_tokens: 1024
 
-## Cloudflare Workers AI
-cloudflare:
-  api_url: ${CLOUDFLARE_API_URL}
-  api_token: ${CLOUDFLARE_API_TOKEN}
+## 阿里百炼 (Bailing) API
+bailing:
+  api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  api_key: ${BAILING_API_KEY}
 
 ## Vector Store (for辅助查找)
 vector_store:
