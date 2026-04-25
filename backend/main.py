@@ -691,6 +691,81 @@ def run_lint():
         raise HTTPException(status_code=500, detail=f"Error running lint: {str(e)}")
 
 
+@app.get("/api/system/raw-sources")
+def get_raw_sources():
+    """Get all raw source files"""
+    try:
+        sources = []
+        if os.path.exists(RAW_SOURCES_DIR):
+            for filename in os.listdir(RAW_SOURCES_DIR):
+                file_path = os.path.join(RAW_SOURCES_DIR, filename)
+                if os.path.isfile(file_path):
+                    # 获取文件扩展名作为类型
+                    ext = os.path.splitext(filename)[1].lower().lstrip('.')
+                    file_type = ext if ext else 'txt'
+                    
+                    # 读取文件内容（限制大小）
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read(10000)  # 只读取前10000字符
+                    except:
+                        content = "[Binary file or encoding error]"
+                    
+                    sources.append({
+                        "id": filename,
+                        "name": filename,
+                        "title": filename,
+                        "type": file_type,
+                        "content": content,
+                        "lastModified": os.path.getmtime(file_path),
+                        "dateAdded": os.path.getctime(file_path)
+                    })
+        return sources
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading raw sources: {str(e)}")
+
+
+@app.get("/api/system/raw-sources/{source_id}/preview-delete")
+def preview_delete_raw_source(source_id: str):
+    """Preview the impact of deleting a raw source file"""
+    try:
+        # 查找关联的 Wiki 页面
+        linked_pages = find_pages_by_source(source_id)
+        
+        return {
+            "linked_count": len(linked_pages),
+            "linked_wiki_pages": linked_pages
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error previewing delete: {str(e)}")
+
+
+@app.delete("/api/system/raw-sources/{source_id}")
+def delete_raw_source(source_id: str):
+    """Delete a raw source file and mark related wiki pages as orphan"""
+    try:
+        file_path = os.path.join(RAW_SOURCES_DIR, source_id)
+        
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="Source file not found")
+        
+        # 标记关联的 Wiki 页面为孤立页面
+        marked_pages = mark_pages_as_orphan(source_id)
+        
+        # 删除源文件
+        os.remove(file_path)
+        
+        return {
+            "message": "Source file deleted successfully",
+            "deleted_file": source_id,
+            "marked_orphan_pages": marked_pages
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting source: {str(e)}")
+
+
 @app.get("/api/pages")
 def get_pages():
     """Get all wiki pages"""
