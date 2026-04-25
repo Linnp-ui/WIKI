@@ -29,17 +29,35 @@ export function MarkdownRenderer({ content, onWikiLinkClick }: MarkdownRendererP
       const cleanName = p1.replace(/\*\*/g, '').trim();
       if (cleanName.includes('(deleted)')) {
         const finalName = cleanName.replace('(deleted)', '').trim();
-        return `[${finalName}](wikilink:${finalName})`;
+        return `[${finalName}](wikilink:${encodeURIComponent(finalName)})`;
       }
-      return `[${cleanName}](wikilink:${cleanName})`;
+      return `[${cleanName}](wikilink:${encodeURIComponent(cleanName)})`;
     })
-    // Convert any remaining [text](http://localhost:3001/...) links to wiki links
-    .replace(/\[(.*?)\]\(http:\/\/localhost:3001\/[^)]*\)/g, (match, text) => {
-      return `[${text}](wikilink:${text.trim()})`;
-    })
-    // Convert any remaining [text](/...) links to wiki links
-    .replace(/\[(.*?)\]\(\/(?!\/)[^)]*\)/g, (match, text) => {
-      return `[${text}](wikilink:${text.trim()})`;
+    // Convert any remaining [text](url) links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+      // If it's already a wikilink, make sure it's encoded
+      if (url.startsWith('wikilink:')) {
+        const target = url.slice(9);
+        const decodedTarget = decodeURIComponent(target);
+        return `[${text}](wikilink:${encodeURIComponent(decodedTarget)})`;
+      }
+      // If it's a localhost link
+      if (url.startsWith('http://localhost:3001/')) {
+        return `[${text}](wikilink:${encodeURIComponent(text.trim())})`;
+      }
+      // If it starts with /
+      if (url.startsWith('/') && !url.startsWith('//')) {
+        return `[${text}](wikilink:${encodeURIComponent(text.trim())})`;
+      }
+      // If the url is identical to the text (e.g. [Hugging Face](Hugging Face))
+      if (url.trim() === text.trim()) {
+        return `[${text}](wikilink:${encodeURIComponent(text.trim())})`;
+      }
+      // Encode any other URLs with spaces so they parse correctly
+      if (url.includes(' ')) {
+        return `[${text}](${encodeURI(url)})`;
+      }
+      return match;
     });
   console.log('Processed content:', processedContent); // Debug log
 
